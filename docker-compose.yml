@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: arsgora-backend
+    restart: always
+    env_file:
+      - ./backend/.env.production
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.arsgora-back.rule=Host(`back-arsgora.e-rma.ru`)"
+      - "traefik.http.routers.arsgora-back.entrypoints=websecure"
+      - "traefik.http.routers.arsgora-back.tls.certresolver=letsencrypt"
+      - "traefik.http.services.arsgora-back.loadbalancer.server.port=4000"
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: arsgora-admin
+    restart: always
+    # env_file тут не обязателен, но можно оставить на будущее
+    env_file:
+      - ./admin/.env.production
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.arsgora-admin.rule=Host(`primorye-tour.e-rma.ru`)"
+      - "traefik.http.routers.arsgora-admin.entrypoints=websecure"
+      - "traefik.http.routers.arsgora-admin.tls.certresolver=letsencrypt"
+      - "traefik.http.services.arsgora-admin.loadbalancer.server.port=80"
+
+networks:
+  web:
+    external: true

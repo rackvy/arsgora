@@ -7,7 +7,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "seed:admin": "node dist/seedAdmin.js"
   },
   "keywords": [],
   "author": "",
