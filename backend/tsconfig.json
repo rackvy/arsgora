@@ -12,5 +12,5 @@
     "resolveJsonModule": true,
     "baseUrl": "./"
   },
-  "include": ["src", "prisma.config.ts"]
+  "include": ["src/**/*.ts"]
 }
