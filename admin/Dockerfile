@@ -5,7 +5,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-COPY tsconfig.json vite.config.ts index.html ./
+# ВАЖНО: копируем все tsconfig-файлы
+COPY tsconfig*.json vite.config.ts index.html ./
 COPY .env.production ./
 COPY src ./src
 
