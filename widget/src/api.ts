@@ -1,6 +1,6 @@
 import type { AuthResponse, LiftCode } from "./types";
 
-let API_BASE_URL = "http://localhost:4000/api";
+let API_BASE_URL = "https://back-arsgora.e-rma.ru/api";
 
 export function setApiBaseUrl(url: string) {
     API_BASE_URL = url.replace(/\/+$/, "");
@@ -122,4 +122,30 @@ export function purchaseCodes(count: number) {
         },
         true
     );
+}
+
+
+// ======= payments ========
+export function createYooPayment(count: number) {
+    return request<{
+        paymentId: number;
+        providerPaymentId: string;
+        confirmationUrl: string;
+        status: string;
+    }>(
+        "/payments/yookassa/create",
+        {
+            method: "POST",
+            body: JSON.stringify({ count }),
+        },
+        true
+    );
+}
+
+export function getPaymentStatus(id: number) {
+    return request<{
+        id: number;
+        status: string;
+        codesCount: number;
+    }>(`/payments/${id}/status`);
 }

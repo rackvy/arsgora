@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import type { LiftCode } from "../types";
-import { fetchMyCodes, markCodeUsed, purchaseCodes } from "../api";
+import { createYooPayment, fetchMyCodes, markCodeUsed } from "../api";
 import { QRCodeCanvas } from "qrcode.react";
 
 type Filter = "all" | "unused";
@@ -47,12 +47,18 @@ const CodesPanel: React.FC = () => {
 
         setBuyLoading(true);
         try {
-            // имитация эквайринга — ждём 2 секунды
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-            const newCodes = await purchaseCodes(count);
-            setCodes((prev) => [...newCodes, ...prev]);
+            // создаём платёж
+            const pay = await createYooPayment(count);
+
+            if (pay.confirmationUrl) {
+                // редиректим пользователя на ЮKassa
+                window.location.href = pay.confirmationUrl;
+                return; // дальше уже код не выполнится до возврата
+            } else {
+                setError("Не удалось получить ссылку оплаты");
+            }
         } catch (err: any) {
-            setError(err.message || "Ошибка покупки кодов");
+            setError(err.message || "Ошибка создания платежа");
         } finally {
             setBuyLoading(false);
         }

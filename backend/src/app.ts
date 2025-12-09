@@ -7,6 +7,7 @@ import authRouter from "./routes/auth";
 import meRouter from "./routes/me";
 import codesRouter from "./routes/codes";
 import adminRouter from "./routes/admin";
+import paymentsRoutes from "./routes/payments";
 import { errorMiddleware } from "./middlewares/errorMiddleware";
 
 export const createApp = () => {
@@ -26,6 +27,7 @@ export const createApp = () => {
     app.use("/api/me", meRouter);
     app.use("/api/codes", codesRouter);
     app.use("/api/admin", adminRouter);
+    app.use("/api/payments", paymentsRoutes);
 
     app.use(errorMiddleware);
 

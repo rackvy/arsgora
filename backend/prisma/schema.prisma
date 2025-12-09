@@ -45,6 +45,7 @@ model User {
   codes           LiftCode[]
   orders          Order[]
   uploadedBatches CodeBatch[] @relation("UserUploadedBatches")
+  Payment         Payment[]
 }
 
 /**
@@ -111,4 +112,19 @@ model OrderItem {
   codeId Int      @unique
 
   price Int
+}
+
+model Payment {
+  id     Int  @id @default(autoincrement())
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  provider   String // "yookassa"
+  providerId String // payment.id в ЮKassa
+  amount     Int // сумма в копейках / центах
+  currency   String // "RUB"
+  status     String // "pending" | "succeeded" | "canceled" | ...
+  codesCount Int // сколько кодов покупает
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
