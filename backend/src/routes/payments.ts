@@ -36,7 +36,7 @@ router.post("/yookassa/create", authMiddleware, async (req: any, res, next) => {
 
         const returnUrl =
             process.env.WIDGET_RETURN_URL ||
-            "https://primorye-tour.e-rma.ru/#/payment-return";
+            "https://primorye-tour-widget.e-rma.ru/#/payment-return";
 
         const yoo = await createYooPayment({
             amount: amountRub,
