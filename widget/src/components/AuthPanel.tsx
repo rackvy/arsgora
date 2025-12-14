@@ -1,9 +1,23 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import type { AuthUser } from "../types";
-import { login, setToken, widgetRegister, widgetVerify } from "../api";
+import {
+    setToken,
+    widgetLogin,
+    widgetRegister,
+    widgetVerify,
+    widgetResendCode,
+} from "../api";
 
 interface Props {
     onAuthenticated: (user: AuthUser) => void;
+}
+
+const CODE_TTL_SECONDS = 10 * 60;
+
+function formatSeconds(total: number) {
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return `${m}:${String(s).padStart(2, "0")}`;
 }
 
 const AuthPanel: React.FC<Props> = ({ onAuthenticated }) => {
@@ -20,16 +34,36 @@ const AuthPanel: React.FC<Props> = ({ onAuthenticated }) => {
     const [regStep, setRegStep] = useState<"form" | "code">("form");
     const [regUserId, setRegUserId] = useState<number | null>(null);
     const [regCode, setRegCode] = useState("");
-    const [devCode, setDevCode] = useState<string | null>(null); // для dev
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // resend
+    const [resendLoading, setResendLoading] = useState(false);
+    const [resendCooldownUntil, setResendCooldownUntil] = useState<number>(0);
+    const [sentAt, setSentAt] = useState<number>(0); // для таймера "код действует 10 минут"
+
+    const cooldownLeft = useMemo(() => {
+        const now = Date.now();
+        if (!resendCooldownUntil) return 0;
+        const leftMs = resendCooldownUntil - now;
+        return leftMs > 0 ? Math.ceil(leftMs / 1000) : 0;
+    }, [resendCooldownUntil, loading, resendLoading, sentAt]);
+
+    const codeTtlLeft = useMemo(() => {
+        if (!sentAt) return CODE_TTL_SECONDS;
+        const passed = Math.floor((Date.now() - sentAt) / 1000);
+        const left = CODE_TTL_SECONDS - passed;
+        return left > 0 ? left : 0;
+    }, [sentAt, loading, resendLoading, resendCooldownUntil]);
+
+    const normalizeEmail = (value: string) => value.trim().toLowerCase();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
 
-        const email = loginEmail.trim().toLowerCase();
+        const email = normalizeEmail(loginEmail);
         const password = loginPassword;
 
         if (!email || !password) {
@@ -39,10 +73,12 @@ const AuthPanel: React.FC<Props> = ({ onAuthenticated }) => {
 
         setLoading(true);
         try {
-            const res = await login(email, password);
+            const res = await widgetLogin(email, password);
+
             setToken(res.token);
             onAuthenticated(res.user);
         } catch (err: any) {
+            // если бэк вернёт 403 Email not verified — можно подсказать
             setError(err.message || "Ошибка входа");
         } finally {
             setLoading(false);
@@ -52,9 +88,8 @@ const AuthPanel: React.FC<Props> = ({ onAuthenticated }) => {
     const handleRegisterStep1 = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
-        setDevCode(null);
 
-        const email = regEmail.trim().toLowerCase();
+        const email = normalizeEmail(regEmail);
         const password = regPassword;
 
         if (!email || !password || !regPassword2) {
@@ -69,11 +104,15 @@ const AuthPanel: React.FC<Props> = ({ onAuthenticated }) => {
         setLoading(true);
         try {
             const res = await widgetRegister(email, password);
+
             setRegUserId(res.userId);
             setRegStep("code");
-            if (res.devCode) {
-                setDevCode(res.devCode); // для дев-режима, можно подсказать код
-            }
+
+            // запускаем таймер “код действует 10 минут”
+            setSentAt(Date.now());
+
+            // антиспам на ресенд (30 сек)
+            setResendCooldownUntil(Date.now() + 30_000);
         } catch (err: any) {
             setError(err.message || "Ошибка регистрации");
         } finally {
@@ -100,6 +139,7 @@ const AuthPanel: React.FC<Props> = ({ onAuthenticated }) => {
         setLoading(true);
         try {
             const res = await widgetVerify(regUserId, code);
+
             setToken(res.token);
             onAuthenticated(res.user);
         } catch (err: any) {
@@ -109,11 +149,37 @@ const AuthPanel: React.FC<Props> = ({ onAuthenticated }) => {
         }
     };
 
+    const handleResend = async () => {
+        setError(null);
+
+        const email = normalizeEmail(regEmail);
+        if (!email) {
+            setError("Введите email");
+            setRegStep("form");
+            return;
+        }
+
+        if (cooldownLeft > 0) return;
+
+        setResendLoading(true);
+        try {
+            await widgetResendCode(email);
+
+            setSentAt(Date.now());
+            setResendCooldownUntil(Date.now() + 30_000);
+        } catch (err: any) {
+            setError(err.message || "Не удалось отправить код");
+        } finally {
+            setResendLoading(false);
+        }
+    };
+
     const resetRegister = () => {
         setRegStep("form");
         setRegUserId(null);
         setRegCode("");
-        setDevCode(null);
+        setSentAt(0);
+        setResendCooldownUntil(0);
         setError(null);
     };
 
@@ -122,9 +188,7 @@ const AuthPanel: React.FC<Props> = ({ onAuthenticated }) => {
             <div className="ag-tabs">
                 <button
                     type="button"
-                    className={
-                        "ag-tab" + (mode === "login" ? " ag-tab--active" : "")
-                    }
+                    className={"ag-tab" + (mode === "login" ? " ag-tab--active" : "")}
                     onClick={() => {
                         setMode("login");
                         setError(null);
@@ -134,9 +198,7 @@ const AuthPanel: React.FC<Props> = ({ onAuthenticated }) => {
                 </button>
                 <button
                     type="button"
-                    className={
-                        "ag-tab" + (mode === "register" ? " ag-tab--active" : "")
-                    }
+                    className={"ag-tab" + (mode === "register" ? " ag-tab--active" : "")}
                     onClick={() => {
                         setMode("register");
                         setError(null);
@@ -156,6 +218,7 @@ const AuthPanel: React.FC<Props> = ({ onAuthenticated }) => {
                                 type="email"
                                 value={loginEmail}
                                 onChange={(e) => setLoginEmail(e.target.value)}
+                                autoComplete="email"
                             />
                         </label>
                     </div>
@@ -167,15 +230,12 @@ const AuthPanel: React.FC<Props> = ({ onAuthenticated }) => {
                                 type="password"
                                 value={loginPassword}
                                 onChange={(e) => setLoginPassword(e.target.value)}
+                                autoComplete="current-password"
                             />
                         </label>
                     </div>
                     {error && <div className="ag-error">{error}</div>}
-                    <button
-                        className="ag-btn ag-btn--primary"
-                        type="submit"
-                        disabled={loading}
-                    >
+                    <button className="ag-btn ag-btn--primary" type="submit" disabled={loading}>
                         {loading ? "Вход..." : "Войти"}
                     </button>
                 </form>
@@ -193,6 +253,7 @@ const AuthPanel: React.FC<Props> = ({ onAuthenticated }) => {
                                         type="email"
                                         value={regEmail}
                                         onChange={(e) => setRegEmail(e.target.value)}
+                                        autoComplete="email"
                                     />
                                 </label>
                             </div>
@@ -204,6 +265,7 @@ const AuthPanel: React.FC<Props> = ({ onAuthenticated }) => {
                                         type="password"
                                         value={regPassword}
                                         onChange={(e) => setRegPassword(e.target.value)}
+                                        autoComplete="new-password"
                                     />
                                 </label>
                             </div>
@@ -215,15 +277,12 @@ const AuthPanel: React.FC<Props> = ({ onAuthenticated }) => {
                                         type="password"
                                         value={regPassword2}
                                         onChange={(e) => setRegPassword2(e.target.value)}
+                                        autoComplete="new-password"
                                     />
                                 </label>
                             </div>
                             {error && <div className="ag-error">{error}</div>}
-                            <button
-                                className="ag-btn ag-btn--primary"
-                                type="submit"
-                                disabled={loading}
-                            >
+                            <button className="ag-btn ag-btn--primary" type="submit" disabled={loading}>
                                 {loading ? "Отправка кода..." : "Зарегистрироваться"}
                             </button>
                         </form>
@@ -240,29 +299,42 @@ const AuthPanel: React.FC<Props> = ({ onAuthenticated }) => {
                                         value={regCode}
                                         onChange={(e) => setRegCode(e.target.value)}
                                         placeholder="6 цифр из письма"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
                                     />
                                 </label>
-                            </div>
-                            {devCode && (
-                                <div className="ag-dev-tip">
-                                    Для теста: код <strong>{devCode}</strong>
+                                <div className="ag-hint">
+                                    Код действует: <strong>{formatSeconds(codeTtlLeft)}</strong>
                                 </div>
-                            )}
+                            </div>
+
+                            <div className="ag-form-group">
+                                <button
+                                    type="button"
+                                    className="ag-btn ag-btn--ghost"
+                                    onClick={handleResend}
+                                    disabled={resendLoading || cooldownLeft > 0 || loading}
+                                >
+                                    {resendLoading
+                                        ? "Отправляем..."
+                                        : cooldownLeft > 0
+                                            ? `Отправить ещё раз через ${cooldownLeft}с`
+                                            : "Отправить код ещё раз"}
+                                </button>
+                            </div>
+
                             {error && <div className="ag-error">{error}</div>}
+
                             <div className="ag-form-actions">
                                 <button
                                     type="button"
                                     className="ag-btn ag-btn--ghost"
                                     onClick={resetRegister}
-                                    disabled={loading}
+                                    disabled={loading || resendLoading}
                                 >
                                     Назад
                                 </button>
-                                <button
-                                    className="ag-btn ag-btn--primary"
-                                    type="submit"
-                                    disabled={loading}
-                                >
+                                <button className="ag-btn ag-btn--primary" type="submit" disabled={loading}>
                                     {loading ? "Проверка..." : "Подтвердить email"}
                                 </button>
                             </div>

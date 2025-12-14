@@ -1,4 +1,4 @@
-import type { AuthResponse, LiftCode } from "./types";
+import type { AuthResponse, LiftCode, WidgetRegisterResponse } from "./types";
 
 let API_BASE_URL = "https://back-arsgora.e-rma.ru/api";
 
@@ -68,36 +68,31 @@ async function request<T>(
 // ====== auth для виджета ======
 
 export function widgetRegister(email: string, password: string) {
-    return request<{ ok: true; userId: number; email: string; devCode?: string; expiresAt: string }>(
-        "/auth/widget/register",
-        {
-            method: "POST",
-            body: JSON.stringify({ email, password }),
-        },
-        false
-    );
+    return request<WidgetRegisterResponse>("/auth/widget/register", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+    });
 }
 
 export function widgetVerify(userId: number, code: string) {
-    return request<AuthResponse>(
-        "/auth/widget/verify",
-        {
-            method: "POST",
-            body: JSON.stringify({ userId, code }),
-        },
-        false
-    );
+    return request<AuthResponse>("/auth/widget/verify", {
+        method: "POST",
+        body: JSON.stringify({ userId, code }),
+    });
 }
 
-export function login(email: string, password: string) {
-    return request<AuthResponse>(
-        "/auth/login",
-        {
-            method: "POST",
-            body: JSON.stringify({ email, password }),
-        },
-        false
-    );
+export function widgetResendCode(email: string) {
+    return request<{ ok: true; expiresAt?: string }>("/auth/widget/resend-code", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+    });
+}
+
+export function widgetLogin(email: string, password: string) {
+    return request<AuthResponse>("/auth/widget/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+    });
 }
 
 // ====== коды ======

@@ -5,7 +5,7 @@ import { createYooPayment } from "../services/yookassa";
 
 const router = Router();
 
-// Цена одного кода (пока захардкодим, потом можно вынести в настройки)
+// TO-DO: Цена одного кода (пока захардкодим, потом можно вынести в настройки)
 const CODE_PRICE_RUB = 500; // например, 500 ₽ за код
 
 // POST /api/payments/yookassa/create

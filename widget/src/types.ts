@@ -23,3 +23,10 @@ export interface WidgetConfig {
     apiBaseUrl: string;
     containerId?: string;
 }
+
+export interface WidgetRegisterResponse {
+    ok: true;
+    userId: number;
+    email: string;
+    expiresAt: string;
+}
