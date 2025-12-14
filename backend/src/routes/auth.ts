@@ -148,7 +148,14 @@ router.post("/widget/register", async (req, res, next) => {
             },
         });
 
-        await sendVerificationCodeEmail(user.email, code);
+        try {
+            await sendVerificationCodeEmail(user.email, code);
+        } catch (e) {
+            console.error(e);
+            return res
+                .status(503)
+                .json({ error: "Почтовый сервер недоступен. Попробуйте позже." });
+        }
 
         return res.json({
             ok: true,
