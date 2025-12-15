@@ -8,6 +8,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
     const isUsers = location.pathname.startsWith("/users");
     const isCodes = location.pathname.startsWith("/codes");
+    const isSettings = location.pathname.startsWith("/settings");
 
     return (
         <div className="app-shell">
@@ -45,10 +46,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     <Link
                         to="/settings"
                         className={
-                            "sidebar__link" + (isCodes ? " sidebar__link--active" : "")
+                            "sidebar__link" + (isSettings ? " sidebar__link--active" : "")
                         }
                     >
-                        <span>Коды подъёмника</span>
+                        <span>Настройки</span>
                         {/*<span className="sidebar__link-pill">Codes</span>*/}
                     </Link>
                 </div>

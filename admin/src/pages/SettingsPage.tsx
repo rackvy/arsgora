@@ -74,7 +74,7 @@ const SettingsPage: React.FC = () => {
                             <label className="ag-label">
                                 Цена за 1 код (₽)
                                 <input
-                                    className="ag-input"
+                                    className="input"
                                     type="number"
                                     min={1}
                                     step={1}
@@ -91,7 +91,7 @@ const SettingsPage: React.FC = () => {
                         {okMsg && <div className="ag-success">{okMsg}</div>}
 
                         <div className="ag-form-actions">
-                            <button className="ag-btn ag-btn--primary" type="submit" disabled={saving}>
+                            <button className="btn btn--primary" type="submit" disabled={saving}>
                                 {saving ? "Сохранение..." : "Сохранить"}
                             </button>
                         </div>
