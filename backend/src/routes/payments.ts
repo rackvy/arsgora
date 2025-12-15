@@ -2,11 +2,9 @@ import { Router } from "express";
 import { prisma } from "../prisma";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { createYooPayment } from "../services/yookassa";
+import { getCodePriceRub } from "../services/settings";
 
 const router = Router();
-
-// TO-DO: Цена одного кода (пока захардкодим, потом можно вынести в настройки)
-const CODE_PRICE_RUB = 500; // например, 500 ₽ за код
 
 // POST /api/payments/yookassa/create
 router.post("/yookassa/create", authMiddleware, async (req: any, res, next) => {
@@ -19,7 +17,8 @@ router.post("/yookassa/create", authMiddleware, async (req: any, res, next) => {
             return res.status(400).json({ error: "Invalid codes count" });
         }
 
-        const amountRub = CODE_PRICE_RUB * codesCount;
+        const priceRub = await getCodePriceRub();
+        const amountRub = priceRub * codesCount;
 
         // создаём запись платежа в нашей БД
         const payment = await prisma.payment.create({

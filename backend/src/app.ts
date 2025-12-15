@@ -8,6 +8,7 @@ import meRouter from "./routes/me";
 import codesRouter from "./routes/codes";
 import adminRouter from "./routes/admin";
 import paymentsRoutes from "./routes/payments";
+import adminSettings from "./routes/adminSettings";
 import { errorMiddleware } from "./middlewares/errorMiddleware";
 
 export const createApp = () => {
@@ -28,6 +29,8 @@ export const createApp = () => {
     app.use("/api/codes", codesRouter);
     app.use("/api/admin", adminRouter);
     app.use("/api/payments", paymentsRoutes);
+
+    app.use("/api/admin/settings", adminSettings);
 
     app.use(errorMiddleware);
 
