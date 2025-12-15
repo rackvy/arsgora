@@ -487,3 +487,21 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+
+.ag-admin-page { padding: 24px; }
+.ag-admin-header { margin-bottom: 16px; }
+.ag-admin-title { margin: 0; font-size: 22px; }
+.ag-admin-subtitle { margin-top: 4px; color: #7b7b7b; }
+
+.ag-card-title { font-weight: 700; margin-bottom: 12px; }
+.ag-muted { color: #7b7b7b; }
+
+.ag-success {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #e8f7ea;
+}
+.ag-powered { margin-top: 18px; font-size: 12px; color: #8b8b8b; }
+.ag-powered a { color: inherit; }

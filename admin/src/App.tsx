@@ -3,6 +3,7 @@ import { Route, Routes, Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import UsersPage from "./pages/UsersPage";
 import CodesPage from "./pages/CodesPage";
+import SettingsPage from "./pages/SettingsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
 
@@ -26,6 +27,16 @@ const App: React.FC = () => {
                     <ProtectedRoute>
                         <Layout>
                             <CodesPage />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/settings"
+                element={
+                    <ProtectedRoute>
+                        <Layout>
+                            <SettingsPage />
                         </Layout>
                     </ProtectedRoute>
                 }

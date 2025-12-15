@@ -127,3 +127,22 @@ export async function uploadExcel(
         codesCount: number;
     };
 }
+
+export async function adminGetCodePrice(): Promise<{ priceRub: number }> {
+    return request<{ priceRub: number }>("/admin/settings/code-price", { method: "GET" }, true);
+}
+
+export async function adminSetCodePrice(priceRub: number): Promise<{ ok: true }> {
+    const token = getAuthToken();
+    if (!token) {
+        throw new Error("Not authenticated");
+    }
+
+    return request<{ ok: true }>("/admin/settings/code-price", {
+        method: "PUT",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ priceRub }),
+    }, true);
+}

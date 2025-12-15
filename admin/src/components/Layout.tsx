@@ -42,6 +42,15 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         <span>Коды подъёмника</span>
                         {/*<span className="sidebar__link-pill">Codes</span>*/}
                     </Link>
+                    <Link
+                        to="/settings"
+                        className={
+                            "sidebar__link" + (isCodes ? " sidebar__link--active" : "")
+                        }
+                    >
+                        <span>Коды подъёмника</span>
+                        {/*<span className="sidebar__link-pill">Codes</span>*/}
+                    </Link>
                 </div>
 
                 <div className="sidebar__footer">
