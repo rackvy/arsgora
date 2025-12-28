@@ -313,10 +313,34 @@ router.post("/widget/login", async (req, res, next) => {
         }
 
         if (!user.emailVerifiedAt) {
-            return res.status(403).json({
-                error: "Email не подтверждён",
+            const code = generateCode();
+            const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+            await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    emailLoginCode: code,
+                    emailLoginCodeExpiresAt: expiresAt,
+                },
+            });
+
+            try {
+                await sendVerificationCodeEmail(user.email, code);
+            } catch (e) {
+                console.error(e);
+                return res.status(503).json({
+                    error: "Почтовый сервер недоступен. Попробуйте позже.",
+                });
+            }
+
+            return res.status(200).json({
+                needsVerification: true,
+                userId: user.id,
+                email: user.email,
+                expiresAt,
             });
         }
+
 
         const token = jwt.sign(
             { userId: user.id, role: user.role },

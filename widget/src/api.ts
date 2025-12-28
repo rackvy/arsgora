@@ -1,4 +1,4 @@
-import type { AuthResponse, LiftCode, WidgetRegisterResponse } from "./types";
+import type { AuthResponse, LiftCode, WidgetRegisterResponse, WidgetLoginResponse } from "./types";
 
 let API_BASE_URL = "https://back-arsgora.e-rma.ru/api";
 
@@ -89,11 +89,12 @@ export function widgetResendCode(email: string) {
 }
 
 export function widgetLogin(email: string, password: string) {
-    return request<AuthResponse>("/auth/widget/login", {
+    return request<WidgetLoginResponse>("/auth/widget/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
     });
 }
+
 
 // ====== коды ======
 

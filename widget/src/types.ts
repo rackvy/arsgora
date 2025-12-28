@@ -30,3 +30,21 @@ export interface WidgetRegisterResponse {
     email: string;
     expiresAt: string;
 }
+
+export type WidgetLoginSuccessResponse = {
+    needsVerification?: false;
+    token: string;
+    user: AuthUser;
+};
+
+export type WidgetLoginNeedVerifyResponse = {
+    needsVerification: true;
+    userId: number;
+    email: string;
+    expiresAt: string;
+};
+
+export type WidgetLoginResponse =
+    | WidgetLoginSuccessResponse
+    | WidgetLoginNeedVerifyResponse;
+

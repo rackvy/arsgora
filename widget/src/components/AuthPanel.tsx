@@ -75,10 +75,21 @@ const AuthPanel: React.FC<Props> = ({ onAuthenticated }) => {
         try {
             const res = await widgetLogin(email, password);
 
+            // Если email не подтвержден — бэк вернет needsVerification
+            if (res.needsVerification) {
+                setMode("register");
+                setRegStep("code");
+                setRegUserId(res.userId);
+                setRegEmail(email);
+                setSentAt(Date.now());
+                setResendCooldownUntil(Date.now() + 30_000);
+                setError("Email не подтверждён. Мы отправили новый код на почту.");
+                return;
+            }
+
             setToken(res.token);
             onAuthenticated(res.user);
         } catch (err: any) {
-            // если бэк вернёт 403 Email not verified — можно подсказать
             setError(err.message || "Ошибка входа");
         } finally {
             setLoading(false);
