@@ -272,7 +272,7 @@
 }
 
 .ag-modal {
-    background-color: #020617;
+    background-color: #fff;
     border-radius: 14px;
     padding: 16px;
     width: 320px;
@@ -321,8 +321,8 @@
 
 .ag-widget {
     font-family: system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;
-    background-color: #0f172a;
-    color: #e5e7eb;
+    background-color: #fff;
+    color: #222020;
     border-radius: 14px;
     padding: 16px;
     max-width: 420px;
@@ -378,7 +378,7 @@
 }
 
 .ag-powered a {
-    color: #c9c9c9;
+    color: #000;
     text-decoration: none;
 }
 
@@ -393,4 +393,19 @@
     border-radius: 999px;
     background-color: #eeeeee;
     margin-bottom: 20px;
+}
+.ag-filter-btn--active{
+    color: #fff;
+}
+
+.ag-code-item{
+    background-color: #fff;
+    color: #424344;
+}
+.ag-user-email, .ag-brand-sub, .ag-subtitle, .ag-filter-btn, .ag-powered {
+    color: #424344;
+}
+
+.ag-filter-btn--active {
+    color: #fff;
 }

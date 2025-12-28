@@ -22,7 +22,9 @@ router.post("/register", async (req, res, next) => {
         };
 
         if (!email || !password) {
-            return res.status(400).json({ error: "Email and password are required" });
+            return res.status(400).json({
+                error: "Email и пароль обязательны",
+            });
         }
 
         const normalizedEmail = email.trim().toLowerCase();
@@ -30,8 +32,11 @@ router.post("/register", async (req, res, next) => {
         const existing = await prisma.user.findUnique({
             where: { email: normalizedEmail },
         });
+
         if (existing) {
-            return res.status(400).json({ error: "User already exists" });
+            return res.status(400).json({
+                error: "Пользователь с таким email уже существует",
+            });
         }
 
         const passwordHash = await bcrypt.hash(password, 10);
@@ -70,7 +75,9 @@ router.post("/login", async (req, res, next) => {
         };
 
         if (!email || !password) {
-            return res.status(400).json({ error: "Email and password are required" });
+            return res.status(400).json({
+                error: "Email и пароль обязательны",
+            });
         }
 
         const normalizedEmail = email.trim().toLowerCase();
@@ -78,13 +85,18 @@ router.post("/login", async (req, res, next) => {
         const user = await prisma.user.findUnique({
             where: { email: normalizedEmail },
         });
+
         if (!user) {
-            return res.status(401).json({ error: "Invalid credentials" });
+            return res.status(401).json({
+                error: "Неверный email или пароль",
+            });
         }
 
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) {
-            return res.status(401).json({ error: "Invalid credentials" });
+            return res.status(401).json({
+                error: "Неверный email или пароль",
+            });
         }
 
         const token = jwt.sign(
@@ -108,13 +120,6 @@ router.post("/login", async (req, res, next) => {
 
 // ========== РЕГИСТРАЦИЯ С ПОДТВЕРЖДЕНИЕМ EMAIL (для ВИДЖЕТА) ==========
 
-/**
- * Шаг 1: регистрация и отправка кода
- * POST /api/auth/widget/register
- * body: { email: string, password: string }
- *
- * Пока код возвращаем в ответе (devCode), дальше можно прикрутить SMTP.
- */
 router.post("/widget/register", async (req, res, next) => {
     try {
         const { email, password } = req.body as {
@@ -123,7 +128,9 @@ router.post("/widget/register", async (req, res, next) => {
         };
 
         if (!email || !password) {
-            return res.status(400).json({ error: "Email and password are required" });
+            return res.status(400).json({
+                error: "Email и пароль обязательны",
+            });
         }
 
         const normalizedEmail = email.trim().toLowerCase();
@@ -131,13 +138,16 @@ router.post("/widget/register", async (req, res, next) => {
         const existing = await prisma.user.findUnique({
             where: { email: normalizedEmail },
         });
+
         if (existing) {
-            return res.status(400).json({ error: "User already exists" });
+            return res.status(400).json({
+                error: "Пользователь с таким email уже существует",
+            });
         }
 
         const passwordHash = await bcrypt.hash(password, 10);
         const code = generateCode();
-        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 минут
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
         const user = await prisma.user.create({
             data: {
@@ -152,9 +162,9 @@ router.post("/widget/register", async (req, res, next) => {
             await sendVerificationCodeEmail(user.email, code);
         } catch (e) {
             console.error(e);
-            return res
-                .status(503)
-                .json({ error: "Почтовый сервер недоступен. Попробуйте позже." });
+            return res.status(503).json({
+                error: "Почтовый сервер недоступен. Попробуйте позже.",
+            });
         }
 
         return res.json({
@@ -163,17 +173,11 @@ router.post("/widget/register", async (req, res, next) => {
             email: user.email,
             expiresAt,
         });
-
     } catch (err) {
         next(err);
     }
 });
 
-/**
- * Шаг 2: подтверждение email
- * POST /api/auth/widget/verify
- * body: { userId: number, code: string }
- */
 router.post("/widget/verify", async (req, res, next) => {
     try {
         const { userId, code } = req.body as {
@@ -182,7 +186,9 @@ router.post("/widget/verify", async (req, res, next) => {
         };
 
         if (!userId || !code) {
-            return res.status(400).json({ error: "userId and code are required" });
+            return res.status(400).json({
+                error: "Необходимо указать userId и код подтверждения",
+            });
         }
 
         const user = await prisma.user.findUnique({
@@ -190,15 +196,21 @@ router.post("/widget/verify", async (req, res, next) => {
         });
 
         if (!user || !user.emailLoginCode || !user.emailLoginCodeExpiresAt) {
-            return res.status(400).json({ error: "Code not requested" });
+            return res.status(400).json({
+                error: "Код подтверждения не был запрошен",
+            });
         }
 
         if (user.emailLoginCode !== code.trim()) {
-            return res.status(400).json({ error: "Invalid code" });
+            return res.status(400).json({
+                error: "Неверный код подтверждения",
+            });
         }
 
         if (user.emailLoginCodeExpiresAt.getTime() < Date.now()) {
-            return res.status(400).json({ error: "Code expired" });
+            return res.status(400).json({
+                error: "Срок действия кода истёк",
+            });
         }
 
         const updated = await prisma.user.update({
@@ -229,17 +241,14 @@ router.post("/widget/verify", async (req, res, next) => {
     }
 });
 
-
-/**
- * Шаг 3: повторная отправка кода
- * POST /api/auth/widget/resend-code
- * body: { userId: number, code: string }
- */
 router.post("/widget/resend-code", async (req, res, next) => {
     try {
         const { email } = req.body as { email?: string };
+
         if (!email) {
-            return res.status(400).json({ error: "Email is required" });
+            return res.status(400).json({
+                error: "Email обязателен",
+            });
         }
 
         const normalizedEmail = email.trim().toLowerCase();
@@ -248,12 +257,7 @@ router.post("/widget/resend-code", async (req, res, next) => {
             where: { email: normalizedEmail },
         });
 
-        if (!user) {
-            // специально без утечки "есть/нет пользователь"
-            return res.json({ ok: true });
-        }
-
-        if (user.emailVerifiedAt) {
+        if (!user || user.emailVerifiedAt) {
             return res.json({ ok: true });
         }
 
@@ -276,38 +280,61 @@ router.post("/widget/resend-code", async (req, res, next) => {
     }
 });
 
-
 router.post("/widget/login", async (req, res, next) => {
     try {
-        const { email, password } = req.body as { email?: string; password?: string };
+        const { email, password } = req.body as {
+            email?: string;
+            password?: string;
+        };
 
         if (!email || !password) {
-            return res.status(400).json({ error: "Email and password are required" });
+            return res.status(400).json({
+                error: "Email и пароль обязательны",
+            });
         }
 
         const normalizedEmail = email.trim().toLowerCase();
 
-        const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
-        if (!user) return res.status(401).json({ error: "Invalid credentials" });
+        const user = await prisma.user.findUnique({
+            where: { email: normalizedEmail },
+        });
 
-        const ok = await bcrypt.compare(password, user.passwordHash);
-        if (!ok) return res.status(401).json({ error: "Invalid credentials" });
-
-        if (!user.emailVerifiedAt) {
-            return res.status(403).json({ error: "Email not verified" });
+        if (!user) {
+            return res.status(401).json({
+                error: "Неверный email или пароль",
+            });
         }
 
-        const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: "7d" });
+        const ok = await bcrypt.compare(password, user.passwordHash);
+        if (!ok) {
+            return res.status(401).json({
+                error: "Неверный email или пароль",
+            });
+        }
+
+        if (!user.emailVerifiedAt) {
+            return res.status(403).json({
+                error: "Email не подтверждён",
+            });
+        }
+
+        const token = jwt.sign(
+            { userId: user.id, role: user.role },
+            JWT_SECRET,
+            { expiresIn: "7d" }
+        );
 
         return res.json({
             token,
-            user: { id: user.id, email: user.email, role: user.role },
+            user: {
+                id: user.id,
+                email: user.email,
+                role: user.role,
+            },
         });
     } catch (err) {
         next(err);
     }
 });
-
-
 
 export default router;
